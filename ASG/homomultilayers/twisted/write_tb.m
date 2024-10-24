@@ -1,4 +1,4 @@
-function write_tb(nat,a,filename,ualatL,ucell,theta,id,upos,nlayers)
+function write_tb(nat,a,c,filename,ualatL,ucell,theta,id,upos,nlayers)
    % HEADER of xyz coordinates file for TB
    tbfname = 'positions';
    tbfname = join([tbfname,filename,'dat'],".");
@@ -29,15 +29,15 @@ function write_tb(nat,a,filename,ualatL,ucell,theta,id,upos,nlayers)
    fprintf(fileID,format2,ones(1,nlayers));
    fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',cell(1,1:2), 0.0);
    fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',cell(2,1:2), 0.0);
-   fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',0.0, 0.0,40);
+   fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',0.0, 0.0,c);
    fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',alatL(1,1:2), 0.0);
    fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',alatL(2,1:2), 0.0);
-   fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',0.0, 0.0,40);
+   fprintf(fileID,'%8.8f   %8.8f   %8.8f\n',0.0, 0.0,c);
    
    for ilayer = 0 : nlayers - 1
        for ik = 1:nat/nlayers
            k1 = ik + ilayer*nat/nlayers;
-           fprintf(fileID,'%s %i %4.6f %4.6f %4.6f\n',id(k1),ilayer,pos(k1,1),pos(k1,2),pos(k1,3));
+           fprintf(fileID,'%s %i %4.6f %4.6f %4.6f\n',id(k1),ilayer+1,pos(k1,1),pos(k1,2),pos(k1,3));
        end
    end
    

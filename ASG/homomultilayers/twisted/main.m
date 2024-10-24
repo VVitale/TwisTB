@@ -89,13 +89,51 @@
 % MoSe2 3.315  12.9567    0.621
 % WSe2  3.3145 13.0089    0.621
 
+dft_OPTB88_qe_geom = [
+ 3.183  12.0264 
+ 3.315  12.9567 
+ 3.182  12.1634 
+ 3.3145 13.0089];
+
+dft_PBE_D3_siesta_geom = [
+ 3.183  12.0941 
+ 3.315  12.6589 
+ 3.182  11.7851 
+ 3.3145 12.5227];
+
+lammps_sw_geom = [
+ 3.117   12.00 
+ 3.311   12.84 
+ 3.127   12.21 
+ 3.288   12.82]; 
+
+geom_data = dft_OPTB88_qe_geom; %lammps_sw_geom;
+mat_params = cell(6,5);
+%MoS2 imat = 1
+mat_params{1,1} = 'Mo';mat_params{1,2} = 'S';mat_params{1,3} = geom_data(1,1);mat_params{1,4} = geom_data(1,2);mat_params{1,5} = 'TMD'; 
+%MoSe2 imat = 2
+mat_params{2,1} = 'Mo';mat_params{2,2} = 'Se';mat_params{2,3} = geom_data(2,1); mat_params{2,4} = geom_data(2,2);mat_params{2,5} = 'TMD';
+%WS2 imat = 3
+mat_params{3,1} = 'W';mat_params{3,2} = 'S';mat_params{3,3} = geom_data(3,1); mat_params{3,4} = geom_data(3,2);mat_params{3,5} = 'TMD';
+%WSe2 imat = 4
+mat_params{4,1} = 'W';mat_params{4,2} = 'Se';mat_params{4,3} = geom_data(4,1); mat_params{4,4} = geom_data(4,2);mat_params{4,5} = 'TMD';
+%graphene imat = 5
+mat_params{5,1} = 'C';mat_params{5,2} = 'C';mat_params{5,3} = 2.46; mat_params{5,4} = 3.30;mat_params{5,5} = 'graphene';
+%hBN imat = 6
+mat_params{6,1} = 'B';mat_params{5,2} = 'N';mat_params{5,3} = 2.504; mat_params{5,4} = 3.35/2;mat_params{6,5} = 'hBN'
+
+
 %%%%%%%%%%%% BEGIN INPUT %%%%%%%%%%%%%
 % Integer for constructing Moire supercell
-n = 6;
+n = 1;
+% Material index (see table at the top)
+imat = 2;
 % Lattice parameter of monolayer
-a = 3.315; %
+a = mat_params{imat,3};
+%a = 3.182; %
 % Interlayer distance
-c = 13.0089/2;
+c = mat_params{imat,4};
+%c = 12.1634/2;
 % Info for writing Cartesian coordinates and potential to file
 write_positions = true;
 write_potential = false;
@@ -104,13 +142,15 @@ write_cart      = true;
 plot_f = 'xsf';
 write_lammps_input = true;
 % Initial phase
-nlayers = 2;
-orientations = {'u','r'};%,'r','r'};
-translations = {'t0','t0'};%,'t0','t13'};
-atomlabels = {'Mo','Se1','Se2','W','Se1','Se2'}
+nlayers = 1;
+orientations = {'u','r','r'};%,'r'};
+translations = {'t0','t0','t0'};%,'t13'};
+atomlabels = {mat_params{imat+2,1},join([mat_params{imat+2,2},'1']),join([mat_params{imat+2,2},'2']), ...
+       mat_params{imat+2,1},join([mat_params{imat+2,2},'1']),join([mat_params{imat+2,2},'2']),...
+       mat_params{imat,1},join([mat_params{imat,2},'1']),join([mat_params{imat,2},'2'])}  
 % Chemical symbol for system
-comb = 'TMD';
-theta_vec = [0,1];%,1,1];
+comb = mat_params{imat,5};
+theta_vec = [0,0,1];%,1,1];
 
 % Info for writing k-points and path in k-space
 write_kpath = true;
