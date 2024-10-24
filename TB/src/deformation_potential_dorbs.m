@@ -73,9 +73,9 @@ end
 %index_atom_supercell = repmat([1:natoms_met]',[9,1]);
 %average_deformation = average_radius(deformation(ind_met),natoms_met,met_coor,1.2*sqrt(3)*a0(1),supercell,index_atom_supercell);
 %def_avg(ind_met) = average_deformation;
-figure
-scatter3(coor.x(ind_met),coor.y(ind_met),coor.z(ind_met),100,deformation(ind_met),'filled')
-colorbar
+%figure
+%scatter3(coor.x(ind_met),coor.y(ind_met),coor.z(ind_met),100,deformation(ind_met),'filled')
+%colorbar
 
 % Computes macroscopic average over a lattice
     function value_on_lattice = average_radius(chern_op,num_atoms,at_pos,cutoff,at_pos_supercell,...
