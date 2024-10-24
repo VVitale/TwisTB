@@ -38,8 +38,6 @@ materials with a hexagonal unit cell, e.g. graphene, hBN, TMDs.
 The input parameters can be specified in the `main.m` MATLAB file, both for homo and hetero bilayers. 
 Several files can be generated:
 1. `<rootname>.xyz` or `<rootname>.xsf` file for visualisation purposes
-2. `positions.<rootname>.dat` file to be used as input (`positions.dat`) file for `TB_free.x`
-3. `potential.<rootname>.dat` file to be used as input (`potential.dat`) file for `TB_free.x`
 4. `lammps_positions.<rootname>.dat` file to be used as input file for `LAMMPS`
 
 Usage
