@@ -1,5 +1,16 @@
-# Twisted Bilayers Studio
-This GitHub repository hosts the MATLAB codes developed at Imperial College for the calculation of the structural and electronic properties of twisted homo- and hetero- multilayer of different transition metal dichalcogenides.
+```
+                ______                         ______  ____
+               /\__  _\            __         /\__  _\/\  _`\
+               \/_/\ \/ __  __  __/\_\    ____\/_/\ \/\ \ \L\ \
+                  \ \ \/\ \/\ \/\ \/\ \  /',__\  \ \ \ \ \  _ <'
+                   \ \ \ \ \_/ \_/ \ \ \/\__, `\  \ \ \ \ \ \L\ \
+                    \ \_\ \___x___/'\ \_\/\____/   \ \_\ \ \____/
+                     \/_/\/__//__/   \/_/\/___/     \/_/  \/___/
+
+```
+
+# TwisTB
+This GitHub repository hosts the MATLAB codes developed at University of Trieste and Imperial College for the calculation of the structural and electronic properties of twisted homo- and hetero- multilayer of different transition metal dichalcogenides.
 
 ## Authors
 * Valerio Vitale (MATLAB codes for the generation of inital structures)
@@ -10,9 +21,10 @@ This GitHub repository hosts the MATLAB codes developed at Imperial College for 
 Author
 ------
 
-Valerio Vitale, Imperial College London, UK
+Valerio Vitale, University of Trieste
 
-* Email: vvitale@ic.ac.uk
+* Email: vitale.valerio .at. units.it
+
 
 Description
 -----------
