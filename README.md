@@ -17,8 +17,8 @@ This GitHub repository hosts the MATLAB codes developed at University of Trieste
 * Valerio Vitale and Kemal Atalar (MATLAB codes for tight-binding calculations of twisted bilayer TMDs)
 
 
-In publications arising from using this code please cite:
-- Vitale, V., Atalar, K., *et al.* 2D Mater. **8** 045010 (2021)
+## In publications arising from using this code please cite:
+Vitale, V., Atalar, K., *et al.* 2D Mater. **8** 045010 (2021)
 
 ## ASG - Atomic Structures Generator
 
