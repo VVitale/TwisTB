@@ -16,11 +16,11 @@ This GitHub repository hosts the MATLAB codes developed at University of Trieste
 * Valerio Vitale (MATLAB codes for the generation of inital structures)
 * Valerio Vitale and Kemal Atalar (MATLAB codes for tight-binding calculations of twisted bilayer TMDs)
 
-
 ## In publications arising from using this code please cite:
 Vitale, V., Atalar, K., *et al.* 2D Mater. **8** 045010 (2021)
 
-## ASG - Atomic Structures Generator
+
+# ASG - Atomic Structures Generator
 
 Author
 ------
@@ -70,10 +70,10 @@ For twisted hetero-bilayers, e.g. graphene on hBN, one has to specify a target a
 A description of the input parameters is given in the header of the `main.m` file
 
 
-## TB - Tight-Binding
+# TB - Tight-Binding
 
 To use the tight-binding code you need to create an input file (see the header in the read_input.m routine)
 
-## Funding:
+# Funding:
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under the Marie Skłodowska-Curie grant agreement no. 101067977
 
