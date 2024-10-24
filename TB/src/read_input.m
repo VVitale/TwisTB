@@ -6,7 +6,7 @@
 %
 % Outputs:
 % - task                   (I) 1: bandstructure  2: Chern number and Berry curvature   3: DOS  4: charge density   5: exciton spectra and JDOS
-%                              6: Plot wavefunctions at Gamma, M and K   7: Build Hamiltonian on uniform grid and write in hdf5 format
+%                              6: Plot wavefunctions at Gamma, M and K   7: Build Hamiltonian on uniform grid and write in hdf5 format   8: Compute eigenvectors and matrices for Wannier90
 % - restart                (L) Whether this is a restart calculation
 % - read_ham               (L) Whether to read Hamiltonian 
 % - geomfname              (S) Name of geometry file
@@ -47,6 +47,10 @@
 % - flipped                (S) Whether a layer has been flipped to form a 2H stacking
 % - read_kpts              (L) Whether to read k-points
 % - ef_strength            (R) Electric-field strength in V/Ang
+% - onsite_moire           (R) Strength of onsite term proportional to local angle
+% - sixth_nn               (L) Whether to use the Hamiltonian with up to 6th nearest neighbour hoppings
+% - g1                     (R) Screened deformation potential for d orbitals
+% - w90_root               (S) root filename for Wannier90 files
 
 % R = real number
 % I = integer number
@@ -60,7 +64,8 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
     reduced_workspace, num_cond, compute_eigvecs, save_workspace, ...
     num_workers, dE, gradient, lambda, bse_num_vbnd, bse_num_cbnd, bse_int, ...
     bse_broadening, bse_eig_plot, bse_irh, bse_serial, bse_shifted, ...
-    flipped, write_ham, ham_fname, read_kpts, ef_strength] = read_input(filename)
+    flipped, write_ham, ham_fname, read_kpts, ef_strength, onsite_moire, ...
+    sixth_nn, g1, lwannier90, w90_rootname] = read_input(filename)
 
     keys = {'task';                  %1
             'geom_file';             %2
@@ -96,8 +101,12 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
             'bse_irh';               %32
             'bse_serial';            %33
             'bse_shifted';           %34
-            'ef_strength';};         %35
-    numeric_keys = [1,3,4,5,6,7,9,16,19,22,23,24,26,29,31,32,35];
+            'ef_strength';           %35
+            'onsite_moire';          %36
+	    'sixth_nn';              %37
+	    'g1';                    %38
+	    'w90_rootname';};        %39
+    numeric_keys = [1,3,4,5,6,7,9,16,19,22,23,24,26,29,31,32,35,36,38];
     fundamental_keys = [1,2,4,5,6,7,9,29];
     len_keys = size(keys,1);
     value = cell(len_keys,1);
@@ -137,7 +146,11 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
                       1;                         %32
                       'false';                   %33
                       'false';                   %34
-                      0.0;};                     %35
+                      0.0;                       %35
+                      0.0;                       %36
+                      'false';                   %37
+                      0.0;                       %38
+		      'w90';};                   %39
 
     loc_found = 0;
     i = 0;
@@ -228,6 +241,10 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
     bse_serial        = strcmp(deblank(char(value{33})),'true');
     bse_shifted       = strcmp(deblank(char(value{34})),'true');
     ef_strength       = value{35};
+    onsite_moire      = value{36};
+    sixth_nn          = strcmp(deblank(char(value{37})),'true');
+    g1                = value{38};
+    w90_rootname      = deblank(char(value{39}));
 
     % Check input
     if(~isnumeric(aXX2))
@@ -252,6 +269,22 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
 
     if(~isnumeric(bse_broadening))
        error('Error in read_input.m: bse_broadening must be a real number. Aborting ...')
+    end
+
+    if(~isnumeric(bse_eig_plot))
+       error('Error in read_input.m: bse_eig_plot must be an integer number. Aborting ...')
+    end
+
+    if(~isnumeric(bse_irh))
+       error('Error in read_input.m: bse_irh must be an integer number. Aborting ...')
+    end
+
+    if(~isnumeric(ef_strength))
+       error('Error in read_input.m: ef_strength must be a real number. Aborting ...')
+    end
+
+    if(~isnumeric(onsite_moire))
+       error('Error in read_input.m: onsite_moire must be a real number. Aborting ...')
     end
 
     % INTEGER INPUTS
@@ -282,8 +315,8 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
     if(mod(task,1)~=0)
        error('Error in read_input.m: task must be an integer. Aborting ...')
     else
-       if(task~=1 && task~=2 && task~=3 && task~=4 && task~=5 && task~=6 && task~=7)
-          error('Error in read_input.m: task must be an integer between 1 and 7. Aborting ...')
+       if(task~=1 && task~=2 && task~=3 && task~=4 && task~=5 && task~=6 && task~=7 && task~=8)
+          error('Error in read_input.m: task must be an integer between 1 and 8. Aborting ...')
        end
     end
     
@@ -369,7 +402,7 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
     end 
 
     % Check compute_eigvecs=true when computing charge density
-    if((task==2 || task==3 || task==4 || task==5 || task==6) && ~compute_eigvecs)
+    if((task==2 || task==3 || task==4 || task==5 || task==6 || task==8) && ~compute_eigvecs)
       fprintf('WARNING: task %i required but compute_eigvecs = false. Setting compute_eigvecs = true.',task)
       compute_eigvecs = true;
     end
@@ -384,6 +417,21 @@ function [task, restart, read_ham, geomfname, GW, aXX2, ...
 
     if(task == 7 && ~write_ham)
       fprintf('WARNING: task %i required but write_ham = false.',task)
+    end
+
+    if(task == 8)
+	    lwannier90=true;
+    else
+	    lwannier90=false;
+    end
+
+    if (~islogical(lwannier90))
+       error('Error in read_input.m: lwannier90 must be a logical variable, either false or true. Aborting ...')
+    end
+    if(lwannier90)
+	    %Setting read_kpts to true
+	    disp('wannier90 set to true. kpoints are read from the external file w90.nnkp')
+	    read_kpts = false;
     end
 
     clear input tmp loc_found fundamental_keys numeric_keys keys default_values value;

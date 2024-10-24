@@ -7,23 +7,31 @@ classdef orbital < handle
         Rel_index  % index in the 11-orbital basis as defined in PRB 92, 205108 (2015)
         Found_centre % Whether a centre has been assigned
         Centre % Projection of orbital centre onto the metal atoms plane
-        %Centre_pris % Projection of orbital centre onto the metal atoms plane for pristine structure
         Pcentre % Orbital centre for p-orbitals (only orbitals centred on Chalcogens)
-        %Pcentre_pris % Orbital centre for p-orbitals (only orbitals centred on Chalcogens) for pristine structure
-	loc_theta % Local rotation from pristine structure
-        Intra_n_list % list of Ham_index of in-plane nearest neighbors
-        Intra_n_centre % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
-        Intra_n_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
-        Intra_nn_list % list of Ham_index of in-plane next nearest neighbors
-        Intra_nn_centre % list of centres (Cartesian coordinates) of in-plane next nearest neighbors
-        Intra_nn_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
-        Intra_nnn_list % list of Ham_index of in-plane second next nearest neighbors
-        Intra_nnn_centre % list of centres (Cartesian coordinates) of in-plane second next nearest neighbors
-        Intra_nnn_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
-        Inter_n_list % list of Ham_index of nearest neighbor on different layers
-        Inter_n_centre % list of centres (Cartesian coordinates)  of nearest neighbor on different layers
-        Inter_nn_list % list of Ham_index of next nearest neighbor on different layers
-        Inter_nn_centre % list of centres (Cartesian coordinates) of next nearest neighbor on different layers
+	%loc_theta % Local rotation from pristine structure
+	dr % Local rotation from pristine structure
+        Intra_nn1_list % list of Ham_index of in-plane nearest neighbors
+        Intra_nn1_centre % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn1_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn2_list % list of Ham_index of in-plane next nearest neighbors
+        Intra_nn2_centre % list of centres (Cartesian coordinates) of in-plane next nearest neighbors
+        Intra_nn2_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn3_list % list of Ham_index of in-plane second next nearest neighbors
+        Intra_nn3_centre % list of centres (Cartesian coordinates) of in-plane second next nearest neighbors
+        Intra_nn3_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn4_list % list of Ham_index of in-plane nearest neighbors
+        Intra_nn4_centre % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn4_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn5_list % list of Ham_index of in-plane nearest neighbors
+        Intra_nn5_centre % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn5_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn6_list % list of Ham_index of in-plane nearest neighbors
+        Intra_nn6_centre % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Intra_nn6_hoppings % list of centres (Cartesian coordinates) of in-plane nearest neighbors 
+        Inter_nn1_list % list of Ham_index of nearest neighbor on different layers
+        Inter_nn1_centre % list of centres (Cartesian coordinates)  of nearest neighbor on different layers
+        Inter_nn2_list % list of Ham_index of next nearest neighbor on different layers
+        Inter_nn2_centre % list of centres (Cartesian coordinates) of next nearest neighbor on different layers
 	Inter_mx_n_list % list of Ham_index of nearest neighbor on different layers between metal and chalcogen atoms
         Inter_mx_n_centre % list of centres (Cartesian) of nearest neighbour between M and X on different layers
 	Layer % Layer on which orbital's centre lie
@@ -56,93 +64,114 @@ classdef orbital < handle
         function set.Layer(obj,value)
             obj.Layer = value;
         end
-        function set.Intra_n_list(obj,array)
+        function set.Intra_nn1_list(obj,array)
             if(isvector(array))
-                obj.Intra_n_list = array;
+                obj.Intra_nn1_list = array;
             else
                 error('List is not an array')
             end           
         end
-        function set.Intra_nn_list(obj,array)
+        function set.Intra_nn2_list(obj,array)
             if(isvector(array))
-                obj.Intra_nn_list = array;
+                obj.Intra_nn2_list = array;
             else
                 error('List is not an array')
             end           
          end
-         function set.Intra_nnn_list(obj,array)
+         function set.Intra_nn3_list(obj,array)
             if(isvector(array))
-                obj.Intra_nnn_list = array;
+                obj.Intra_nn3_list = array;
             else
                 error('List is not an array')
             end           
          end
-         function set.Intra_n_centre(obj,array)
-            %if(isvector(array))
-                obj.Intra_n_centre = array;
-            %else
-            %    error('List is not an array')
-            %end           
-         end
-         function set.Intra_nn_centre(obj,array)
-            %if(isvector(array))
-                obj.Intra_nn_centre = array;
-            %else
-            %    error('List is not an array')
-            %end           
-         end
-         function set.Intra_nnn_centre(obj,array)
-            %if(isvector(array))
-                obj.Intra_nnn_centre = array;
-            %else
-            %    error('List is not an array')
-            %end           
-         end
-        function set.Intra_n_hoppings(obj,array)
+         function set.Intra_nn4_list(obj,array)
             if(isvector(array))
-                obj.Intra_n_hoppings = array;
+                obj.Intra_nn4_list = array;
+            else
+                error('List is not an array')
+            end           
+         end
+         function set.Intra_nn5_list(obj,array)
+            if(isvector(array))
+                obj.Intra_nn5_list = array;
+            else
+                error('List is not an array')
+            end           
+         end
+         function set.Intra_nn6_list(obj,array)
+            if(isvector(array))
+                obj.Intra_nn6_list = array;
+            else
+                error('List is not an array')
+            end           
+         end
+         function set.Intra_nn1_centre(obj,array)
+            %if(isvector(array))
+                obj.Intra_nn1_centre = array;
+            %else
+            %    error('List is not an array')
+            %end           
+         end
+         function set.Intra_nn2_centre(obj,array)
+            %if(isvector(array))
+                obj.Intra_nn2_centre = array;
+            %else
+            %    error('List is not an array')
+            %end           
+         end
+         function set.Intra_nn3_centre(obj,array)
+            %if(isvector(array))
+                obj.Intra_nn3_centre = array;
+            %else
+            %    error('List is not an array')
+            %end           
+         end
+        function set.Intra_nn1_hoppings(obj,array)
+            if(isvector(array))
+                obj.Intra_nn1_hoppings = array;
             else
                 error('Hoppings is not an array')
             end           
         end
-        function set.Intra_nn_hoppings(obj,array)
+        function set.Intra_nn2_hoppings(obj,array)
             if(isvector(array))
-                obj.Intra_nn_hoppings = array;
+                obj.Intra_nn2_hoppings = array;
             else
                 error('Hoppings is not an array')
             end           
         end
-        function set.Intra_nnn_hoppings(obj,array)
+        function set.Intra_nn3_hoppings(obj,array)
             if(isvector(array))
-                obj.Intra_nnn_hoppings = array;
+                obj.Intra_nn3_hoppings = array;
             else
                 error('Hoppings is not an array')
             end           
         end
-         function set.Inter_n_list(obj,array)
+         function set.Inter_nn1_list(obj,array)
             if(isvector(array))
-                obj.Inter_n_list = array;
+                obj.Inter_nn1_list = array;
             else
                 error('List is not an array')
             end           
         end
-        function set.Inter_n_centre(obj,array)
+        function set.Inter_nn1_centre(obj,array)
             %if(isvector(array))
-                obj.Inter_n_centre = array;
+                obj.Inter_nn1_centre = array;
             %else
             %    error('List is not an array')
             %end           
         end
-        function set.Inter_nn_list(obj,array)
+        function set.Inter_nn2_list(obj,array)
             if(isvector(array))
-                obj.Inter_nn_list = array;
+                obj.Inter_nn2_list = array;
             else
                 error('List is not an array')
             end           
         end
-        function set.Inter_nn_centre(obj,array)
+        function set.Inter_nn2_centre(obj,array)
             %if(isvector(array))
-                obj.Inter_nn_centre = array;
+                obj.Inter_nn2_centre = array;
             %else
             %    error('List is not an array')
             %end           
@@ -181,13 +210,6 @@ classdef orbital < handle
                 error('Centre is not an array')
             end
         end
-      % function set.Centre_pris(obj,array)
-      %     if(isvector(array))
-      %         obj.Centre_pris = array;
-      %     else
-      %         error('Centre_pris is not an array')
-      %     end
-      % end
         function set.Pcentre(obj,array)
             if(isvector(array))
                 obj.Pcentre = array;
@@ -195,15 +217,11 @@ classdef orbital < handle
                 error('Centre is not an array')
             end
         end
-      % function set.Pcentre_pris(obj,array)
-      %     if(isvector(array))
-      %         obj.Pcentre_pris = array;
-      %     else
-      %         error('Centre_pris is not an array')
-      %     end
-      % end
-        function set.loc_theta(obj,value)
-            obj.loc_theta = value;
+        %function set.loc_theta(obj,value)
+        %    obj.loc_theta = value;
+        %end
+        function set.dr(obj,value)
+            obj.dr = value;
         end
         %function rindex = get.Rel_index(obj)
         %    if(mod(obj.Ham_index,11) ~= 0)
@@ -242,12 +260,22 @@ classdef orbital < handle
         function m = get.m(obj)
             rindex = obj.Rel_index;
             if (rindex == 3 || rindex == 9)
-                m = 3;
-            elseif( rindex == 4 || rindex == 10)
                 m = 1;
-            elseif( rindex == 5 || rindex == 11)
+            elseif( rindex == 4 || rindex == 10)
                 m = 2;
-            end
+            elseif( rindex == 5 || rindex == 11)
+                m = 3;
+	    elseif( rindex == 6)
+		m = 1;
+	    elseif( rindex == 7)
+		m = 5;
+	    elseif( rindex == 8)
+		m = 4;
+	    elseif( rindex == 1)
+		m = 2;
+	    elseif( rindex == 2)
+		m = 3;
+	    end
         end
     end
 end

@@ -51,15 +51,15 @@ for spin = -nspin+1:2:nspin-1
         clear orb1;
         for ii = 1 : size(liorb,2)
             iorb = liorb(ii);
-            if (size(orbitals(iorb).Inter_nn_list,2)>1)
+            if (size(orbitals(iorb).Inter_nn2_list,2)>1)
                 orb1 = orbitals(iorb);
-                in = size(orb1.Inter_nn_list,2);
+                in = size(orb1.Inter_nn2_list,2);
                 for inn = 1 : in
-                    orb2 = orbitals(orb1.Inter_nn_list(inn));
-                    delta = orb1.Inter_nn_centre(inn,:);
+                    orb2 = orbitals(orb1.Inter_nn2_list(inn));
+                    delta = orb1.Inter_nn2_centre(inn,:);
                     dsqr = norm(delta);
                     nco = delta(3)/dsqr; mco = delta(2)/dsqr; lco = delta(1)/dsqr;
-                    [Vpsig,Vppi] = interpolate_SK(1,dsqr,delta(3),pp_vint_z(:,layer),pp_vint_parm(:,layer));
+                   [Vpsig,Vppi] = interpolate_SK(1,dsqr,delta(3),pp_vint_z(:,layer),pp_vint_parm(:,layer));
                     if(orb1.Rel_index == 9 && orb2.Rel_index == 3)
                         hopping = set_hopping('pzpz',Vpsig,Vppi,lco,mco,nco,theta,layer);
                     elseif(orb1.Rel_index == 10 && orb2.Rel_index == 4)
@@ -79,7 +79,9 @@ for spin = -nspin+1:2:nspin-1
                     elseif(orb1.Rel_index == 9  && orb2.Rel_index == 4)
                         hopping = set_hopping('pzpx',Vpsig,Vppi,lco,mco,nco,theta,layer);
                     else
-                        error('No interlayer set')
+			    [orb1.Rel_index, orb2.Rel_index]
+                        warning('No interlayer set')
+			hopping = 0;
                     end
                     Hmat(orb1.Ham_index,orb2.Ham_index) = Hmat(orb1.Ham_index,orb2.Ham_index) + hopping*exp(1i*dot(delta,k));
                     Hmat(orb2.Ham_index,orb1.Ham_index) = Hmat(orb2.Ham_index,orb1.Ham_index) + conj(hopping*exp(1i*dot(delta,k))); % + hopping*exp(1i*dot(delta,k));
@@ -118,22 +120,22 @@ for spin = -nspin+1:2:nspin-1
                                 pdr = [pdr, dsqr];
                                 pdt = [pdt, hopping];
                             end
-                       elseif(orb2.Rel_index == 7 && orb1.Rel_index == 9)
-                           % Determine the correct SK parameters
-                           [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay2_z(:,layer),pd_vint_lay2_parm(:,layer));
-                           % hopping = nco*(nco^2 - 0.5*(lco^2 + mco^2))*Vpdsig + sqrt(3)*nco*(lco^2 + mco^2)*Vpdpi;
-                           hopping = set_hopping('pzdxy',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
-                       elseif(orb1.Rel_index == 7 && orb2.Rel_index == 3)
-                           [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay1_z(:,layer),pd_vint_lay1_parm(:,layer));
-                           hopping = set_hopping('dxypz',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
-                       elseif(orb2.Rel_index == 8 && orb1.Rel_index == 9)
-                           % Determine the correct SK parameters
-                           [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay2_z(:,layer),pd_vint_lay2_parm(:,layer));
-                           hopping = set_hopping('pzdx2y2',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
-                           %hopping = sqrt(3)*nco*lco*mco*Vpdsig - 2*nco*lco*mco*Vpdpi;
-                       elseif(orb1.Rel_index == 8 && orb2.Rel_index == 3)
-                          [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay1_z(:,layer),pd_vint_lay1_parm(:,layer));
-                          hopping = set_hopping('dx2y2pz',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
+                     % elseif(orb2.Rel_index == 7 && orb1.Rel_index == 9)
+                     %     % Determine the correct SK parameters
+                     %     [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay2_z(:,layer),pd_vint_lay2_parm(:,layer));
+                     %     % hopping = nco*(nco^2 - 0.5*(lco^2 + mco^2))*Vpdsig + sqrt(3)*nco*(lco^2 + mco^2)*Vpdpi;
+                     %     hopping = set_hopping('pzdxy',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
+                     % elseif(orb1.Rel_index == 7 && orb2.Rel_index == 3)
+                     %     [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay1_z(:,layer),pd_vint_lay1_parm(:,layer));
+                     %     hopping = set_hopping('dxypz',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
+                     % elseif(orb2.Rel_index == 8 && orb1.Rel_index == 9)
+                     %     % Determine the correct SK parameters
+                     %     [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay2_z(:,layer),pd_vint_lay2_parm(:,layer));
+                     %     hopping = set_hopping('pzdx2y2',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
+                     %     %hopping = sqrt(3)*nco*lco*mco*Vpdsig - 2*nco*lco*mco*Vpdpi;
+                     % elseif(orb1.Rel_index == 8 && orb2.Rel_index == 3)
+                     %    [Vpdsig,Vpdpi] = interpolate_SK(2,dsqr,delta(3),pd_vint_lay1_z(:,layer),pd_vint_lay1_parm(:,layer));
+                     %    hopping = set_hopping('dx2y2pz',Vpdsig,Vpdpi,lco,mco,nco,theta,layer);
                         end
                         
                         Hmat(orb1.Ham_index,orb2.Ham_index) = Hmat(orb1.Ham_index,orb2.Ham_index) + hopping*exp(1i*dot(delta,k));

@@ -34,7 +34,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [BSE_eig,omega,Resigma,Acvk,s,indc,indv,indk] = BSE_parallel2(vn,cn,Cv,Cc,Ev,Ec,knum_tot,all_kpts,...
-                                                 a,gradH_x,outfname,mcell,index,nat,...
+                                                 a,Hmat,gradH_x,orb_xcoords,outfname,mcell,index,nat,...
                                                  structure,elho_int,dL)
 
 % Dimension of BSE Hamiltonian 
@@ -235,18 +235,25 @@ if(elho_int)
    
    fprintf('done.\n')
    
-   % In neig != dim pad 
-   Acvk = [Acvk,eye(dim,dim-neig)];
-   BSE_eig = [BSE_eig;1000*ones(dim-neig,1)];
+   % In neig != dim pad
+   if(dim-neig > 0)
+	   padding = dim-neig;
+   else
+	   padding = neig-dim;
+   end
+   Acvk = [Acvk,eye(dim,padding)];
+   BSE_eig = [BSE_eig;1000*ones(padding,1)];
    
 
    % Compute absorbance spectrum 
    s = zeros(neig,1);
    sumM = 0;
-   parfor idim = 1 : neig
+   for idim = 1 : neig
       sumM =0;
       for jdim = 1 : dim
-          sumM = sumM + Acvk(jdim,idim)*(Cv(:,indv(jdim),indk(jdim))'*gradH_x{indk(jdim)}*Cc(:,indc(jdim),indk(jdim)));
+          sumM = sumM + Acvk(jdim,idim)*(Cv(:,indv(jdim),indk(jdim))'*...
+		  (gradH_x{indk(jdim)} + 1i*orb_xcoords*Hmat{indk(jdim)})*...
+		  Cc(:,indc(jdim),indk(jdim)));
       end
       s(idim) = abs(sumM)^2;
    end
@@ -272,7 +279,7 @@ if(elho_int)
    % Compute Joint density of states
    E = linspace(0,6,1000);
    rho2 = zeros(size(E,2),1);
-   for ie = 1 : size(rho2)
+   for ie = 1 : length(rho2)
       for idim = 1 : dim
          %rho1(ie) = rho1(ie) + lorentzian(E(ie),D1(idim),dL);
          rho2(ie) = rho2(ie) + lorentzian(E(ie),BSE_eig(idim),dL);

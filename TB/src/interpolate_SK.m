@@ -31,7 +31,7 @@ Vsig_lst = zeros(size(intpar));
 Vpi_lst = zeros(size(intpar)); 
 
 % Calculate hoppings to put in hoprange
-for ii = 1:size(intpar)
+for ii = 1 : length(intpar)
     % Choose the type of hopping values to interpolate
     if(hop == 1)
         % p-p SL parameters
@@ -50,16 +50,20 @@ end
 
 % Interpolate if it is in zpar range
 % (might implement extrapolation in the future if out of range)
+% Try to extrapolate
 if(rz < zpar(1))
-    Vsigval=Vsig_lst(1);
-    Vpival=Vpi_lst(1);
+    Vsigval=interp1(zpar,Vsig_lst,rz,'spline','extrap');
+    Vpival=interp1(zpar,Vpi_lst,rz,'spline','extrap');
+    % Try to extrapolate
 elseif(rz > zpar(length(zpar)))
-    Vsigval=Vsig_lst(length(zpar));
-    Vpival=Vpi_lst(length(zpar));
+    %Vsigval=Vsig_lst(length(zpar));
+    %Vpival=Vpi_lst(length(zpar));
+    Vsigval=interp1(zpar,Vsig_lst,rz,'spline','extrap');
+    Vpival=interp1(zpar,Vpi_lst,rz,'spline','extrap');
 else
-    % Interpolate
-    Vsigval=interp1(zpar,Vsig_lst,rz);
-    Vpival=interp1(zpar,Vpi_lst,rz);
+    % Interpolate with a spline method
+    Vsigval=interp1(zpar,Vsig_lst,rz,'spline');
+    Vpival=interp1(zpar,Vpi_lst,rz,'spline');
 end
 
 end

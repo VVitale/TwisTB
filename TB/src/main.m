@@ -1,3 +1,4 @@
+%
 %clear all
 %clc
 fprintf('|-----------------------------------------------|\n')
@@ -42,8 +43,16 @@ months = {'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', ...
 fprintf('%i %s %i %02i:%02i\n\n',t(3),months{t(2)},t(1),t(4),t(5))
 tic
 
-%%%%%%%% INPUT %%%%%%%%%%%%%
+%%%%%%%% READ INPUT %%%%%%%%%%%%%
 restart = false;
+if(~exist('inpfname','var'))
+	% Assume inpfname = 'input.dat'
+	inpfname = 'input.dat';
+end
+if(~exist('onlydir','var'))
+	% Assume only_dir = false
+	onlydir = false;
+end
 if(exist(inpfname,'file'))
    fprintf('--> Reading input from input.dat file ... ')
    [task, restart, read_ham, geomfname, gw_par, aXX2, ...
@@ -51,7 +60,8 @@ if(exist(inpfname,'file'))
     lsoc, reduced_workspace, num_cond, compute_eigvecs, save_workspace, ...
     num_workers, dE, gradient, lambda, vn, cn, elho_int, dL, bse_eig_plot, ...
     bse_irh, bse_serial, bse_shifted, flipped, ...
-    write_ham, ham_fname, read_kpts, ef_strength]  = read_input(inpfname);
+    write_ham, ham_fname, read_kpts, ef_strength, onsite_moire, sixth_nn, g1, ...
+    lwannier90, w90_rootname]  = read_input(inpfname);
    fprintf('done\n\n')
 else
    error('Input file not found! Aborting ...')
@@ -170,14 +180,18 @@ if(exist(geomfname_pristine,'file'))
       end
    end
    pris_pos_ws = supercell_pris(IN_ws,:);   
+   clear supercell_pris pris_pos
 else
    rel_pos_ws = rel_pos;
    pris_pos_ws = rel_pos_ws;
    rel_id_ws = [1:tot_natoms];
 end
-clear supercell_pris pris_pos
+% Compute deformation potential
+def_pot = zeros(tot_natoms,1);
+def_pot = deformation_potential_dorbs(def_pot,structure,tot_natoms,mcell,bondlength.*sqrt(3),strain);
+def_pot = deformation_potential_porbs(def_pot,structure,tot_natoms,mcell,bondlength.*sqrt(3),strain);
 
-% multilayer or monolayer?
+% multilayer or monolayer
 multilayer = false;
 
 if (max(structure.layer)>1)
@@ -209,6 +223,7 @@ nspin = 1;
 if (lsoc)
     nspin = 2;
     outfname = join([outfname,'wSOC_']);
+    def_pot = [def_pot;def_pot];
 end
 
 for ilayer = 2 : nlayer
@@ -268,13 +283,33 @@ type2 =  zeros(11,11,nlayer);
 type3 =  zeros(11,11,nlayer);
 type4 =  zeros(11,11,nlayer);
 type5 =  zeros(11,11,nlayer);
-type6 =  zeros(11,11,nlayer);
+type7 =  zeros(11,11,nlayer);
+if(sixth_nn)
+   type8 =  zeros(11,11,nlayer);
+   type10=  zeros(11,11,nlayer);
+   type12=  zeros(11,11,nlayer);
+   type14=  zeros(11,11,nlayer);
+   type16=  zeros(11,11,nlayer);
+   typem16=  zeros(11,11,nlayer);
+   type18=  zeros(11,11,nlayer);
+   typem18=  zeros(11,11,nlayer);
+   type19=  zeros(11,11,nlayer);
+   type20=  zeros(11,11,nlayer);
+   typem21=  zeros(11,11,nlayer);
+end
 lsoM = zeros(nlayer,1);
 lsoX = zeros(nlayer,1);
-for i = 1 : nlayer
-   [onsite(:,i), type1(:,:,i), type2(:,:,i), type3(:,:,i), type4(:,:,i), type5(:,:,i), type6(:,:,i),lsoM(i),lsoX(i)] = set_parameters(tmdc(i),gw_par);
+if(sixth_nn)
+   for i = 1 : nlayer
+      [onsite(:,i), type1(:,:,i), type2(:,:,i), type3(:,:,i), type4(:,:,i), type5(:,:,i), type7(:,:,i),...
+      type8(:,:,i),type10(:,:,i),type12(:,:,i),type14(:,:,i),type16(:,:,i),typem16(:,:,i),type18(:,:,i),typem18(:,:,i),type19(:,:,i),type20(:,:,i),typem21(:,:,i),lsoM(i),lsoX(i)] = set_parameters(tmdc(i),gw_par,sixth_nn);
+   end
+else
+   for i = 1 : nlayer
+      [onsite(:,i), type1(:,:,i), type2(:,:,i), type3(:,:,i), type4(:,:,i), type5(:,:,i), type7(:,:,i),...
+      ~,~,~,~,~,~,~,~,~,~,~,lsoM(i),lsoX(i)] = set_parameters(tmdc(i),gw_par,sixth_nn);
+   end
 end
-
 % Set interlayer parameters
 [pp_vint_z,pp_vint_parm,pd_vint_lay1_z,pd_vint_lay1_parm,pd_vint_lay2_z,pd_vint_lay2_parm]=inter_par(multilayer,nlayer,tmdc);
 fprintf('done\n\n')
@@ -343,7 +378,7 @@ for ilayer = 1 : nlayer
 end
 
 % Size of supercell in real space
-if(tot_natoms==3 || tot_natoms==6 || tot_natoms == 9 || tot_natoms == 42)
+if(tot_natoms == 3 || tot_natoms == 6 || tot_natoms == 9 || tot_natoms == 42)
     ncell1 = 5;
     ncell2 = 5;
 else
@@ -367,6 +402,17 @@ ma3 = mcell(3,:);
 if(convention == 2)
     a2= a2-a1;
     u2= u2-u1;
+    %ma2= ma2-ma1;
+end
+% If it's a Wannier calculation read the nnkp file
+if(lwannier90)
+	nnkp_fname = join([w90_rootname,'.nnkp']);
+	w90_nnkp;
+else
+
+if(convention == 2)
+    %a2= a2-a1;
+    %u2= u2-u1;
     ma2= ma2-ma1;
 end
 
@@ -382,23 +428,12 @@ mb2=2*pi*cross(ma3,ma1)/mv;
 mb3=2*pi*cross(ma1,ma2)/mv;
 
 if(read_kpts)
-   if(exist('kpts.in','file'))
-      data = importdata('kpts.in',' ');
-      recL=[mb1;mb2;mb3];
-      all_kpts = data;
-      knum_tot = size(all_kpts,1)
-      scale_axis = zeros(knum_tot,1);
-      for ik = 2 : knum_tot
-          dk = norm(all_kpts(ik,:)-all_kpts(ik-1,:));
-          scale_axis(ik) = scale_axis(ik-1) + dk;
-      end
-   else
-     error('Error main.m cannot find kpts.in. Aborting ...')
-   end
+	read_kpts;
 else
    % Generate k-points
    [all_kpts,scale_axis,knum_tot,recL] = generate_kpoints(task,multilayer,twisted,miniBZ, ...
             mb1,mb2,mb3,b1,b2,b3,knum,bse_shifted);
+end
 end
 
 % Check number of workers is not greater than number of k-points
@@ -433,7 +468,8 @@ if(restart)
       load(join([dirname,'/H.mat']));
       fprintf('done\n\n')
       % Check size is correct
-      if(size(Hmat{1},1) ~= tot_norbs)
+      size(Hmat)
+      if(size(Hmat,1) ~= tot_norbs)
          error('Error in main.m: Size of Hamiltonian matrix is wrong. Aborting ... ')
       end
       if(size(Hmat,2) ~= knum_tot)
@@ -498,16 +534,27 @@ else
    end
 
    % Initialise orbitals
-   [orbitals] = initialise_orbitals2(orbitals,structure,rel_pos,...
-        rel_pos_ws,pris_pos_ws,rel_id_ws,mcell,tot_natoms,natoms,multilayer,nlayer,nspin);
+   [orbitals,motif,orb_pattern] = initialise_orbitals2(orbitals,structure,...
+	mcell,tot_natoms,natoms,multilayer,nlayer,...
+        nspin,def_pot);
    fprintf('done\n\n')
-   %clear rel_pos pris_pos rel_pos_ws pris_pos_ws rel_id_ws
 
-   fprintf('--> Finding neighbors and assigning hopping parameters ... ')
-   % Find neighbors and assign hopping parameters
-   [orbitals] = opt_find_neigh2(orbitals,mcell,ncell1,ncell2,bondlength,aXX2,...
-      nspin,type1,type2,type3,type4,type5,type6,u1,u2,Rtheta,multilayer,nlayer,interlayer_int,Interpd,flipped);
-   fprintf('done\n\n')
+   fprintf('--> Finding neighbors ... ')
+   % Find neighbors
+   if(sixth_nn)
+      [orbitals] = opt_find_neigh_6thnn(orbitals,mcell,ncell1,ncell2,bondlength,aXX2,...
+         nspin,type1,type2,type3,type4,type5,type7,type8,type10,type12,type14,...
+         type16,typem16,type18,typem18,type19,type20,typem21,a1,a2,Rtheta,multilayer,nlayer,interlayer_int,Interpd,flipped);
+      fprintf('done\n\n')
+      clear type1 type2 type3 type4 type5 type7 type8 type10 type12 type14 type16 typem16 type18 typem18 ...
+	      type19 type20 typem21;
+   else
+      [orbitals] = opt_find_neigh_3rdnn(orbitals,mcell,ncell1,ncell2,bondlength,aXX2,...
+         nspin,type1,type2,type3,type4,type5,type7,u1,u2,Rtheta,multilayer,nlayer,...
+      	 interlayer_int,Interpd,flipped);
+      fprintf('done\n\n')
+      clear type1 type2 type3 type4 type5 type7;
+   end   
 
    % Find transformation matrix from symmetrised basis to unsymmetrised basis
    if(lsoc || interlayer_int)
@@ -557,31 +604,43 @@ if(~read_ham)
 end
 
 % Start parallel Hamiltonian diagonalization
-[Hmat,tb_bands,tb_vecs,gradH_x] = opt_build_and_diag_H(task,Hmat,orbitals,norbs,tot_norbs,...
-              multilayer,nspin,nlayer,neigs,...
-              all_kpts,knum_tot,interlayer_int,lsoc,T,onsite,compute_eigvecs,...
-              pp_vint_z,pp_vint_parm,pd_vint_lay1_z,pd_vint_lay1_parm, ...
-              pd_vint_lay2_z,pd_vint_lay2_parm,theta,Hsoc,Interpd,flipped,...
-              read_ham,save_workspace,reduced_workspace,num_workers,gradient,lambda,...
-              pc,dirname,parallel,write_ham,ef_strength);
+if(sixth_nn)
+   [Hmat,tb_bands,tb_vecs,gradH_x] = opt_build_and_diag_H_6thnn(task,Hmat,orbitals,norbs,tot_norbs,...
+                 multilayer,nspin,nlayer,neigs,...
+                 all_kpts,knum_tot,interlayer_int,lsoc,T,onsite,compute_eigvecs,...
+                 pp_vint_z,pp_vint_parm,pd_vint_lay1_z,pd_vint_lay1_parm, ...
+                 pd_vint_lay2_z,pd_vint_lay2_parm,theta,Hsoc,Interpd,flipped,...
+                 read_ham,save_workspace,reduced_workspace,num_workers,gradient,lambda,...
+                 pc,dirname,parallel,write_ham,onsite_moire,ef_strength,g1);
+else
+   [Hmat,tb_bands,tb_vecs,gradH_x] = opt_build_and_diag_H_3rdnn(task,Hmat,orbitals,norbs,tot_norbs,...
+                 multilayer,nspin,nlayer,neigs,...
+                 all_kpts,knum_tot,interlayer_int,lsoc,T,onsite,compute_eigvecs,...
+                 pp_vint_z,pp_vint_parm,pd_vint_lay1_z,pd_vint_lay1_parm, ...
+                 pd_vint_lay2_z,pd_vint_lay2_parm,theta,Hsoc,Interpd,flipped,...
+                 read_ham,save_workspace,reduced_workspace,num_workers,gradient,lambda,...
+                 pc,dirname,parallel,write_ham,onsite_moire,ef_strength,g1);
+end
 
 %if(task==1 || task==3) 
 %   clear orbitals;
 %end
 
+
 % Assume conduction bands energies are all above 0 eV
 noccs_k = zeros(knum_tot,1);
-if(multilayer && twisted)
+%if(multilayer && twisted)
    if(reduced_workspace)
       for ik = 1 : knum_tot
          ind = find(tb_bands(:,ik) < 0);
          [m,noccs_k(ik)] = max(tb_bands(ind,ik));
       end
-   end
+ %  end
    clear ind
 else
    noccs_k(:) = noccs;
 end
+
 
 % Plot bandstructure
 if(task==1)
@@ -682,8 +741,8 @@ if(task==5)
    end
    Cv = complex(zeros(tot_norbs,vn,knum_tot));
    Cc = complex(zeros(tot_norbs,cn,knum_tot));
-   Ev = zeros(vn,knum_tot);
-   Ec = zeros(cn,knum_tot);
+   Ev = complex(zeros(vn,knum_tot));
+   Ec = complex(zeros(cn,knum_tot));
    v = zeros(vn,knum_tot);
    c = zeros(cn,knum_tot);
    % Find indeces of orbitals associated to hole centre
@@ -696,7 +755,7 @@ if(task==5)
    end
    % Move hole position to the centre of supercell for plotting
    %if(~twisted)
-      r_h = r_h + (knum-1)/2*(mcell(1,:) + mcell(2,:));
+      %r_h = r_h + (knum-1)/2*(mcell(1,:) + mcell(2,:));
    %end
    % Valence states
    for ik = 1 : knum_tot
@@ -713,24 +772,42 @@ if(task==5)
       end
    end
 
-   clear Hmat orbitals tb_bands tb_vecs
+   clear tb_bands tb_vecs
 
-   delete(gcp('nocreate'))
+   orb_xcoords = zeros(tot_norbs,tot_norbs);
+   for iorb = 1 : tot_norbs
+	   if(orbitals(iorb).l == 2)
+		   xiorb = orbitals(iorb).Centre(1);
+	   else
+		   xiorb = orbitals(iorb).Pcentre(1);
+	   end
+	   for jorb = 1 : tot_norbs
+	           if(orbitals(jorb).l == 2)
+	                   xjorb = orbitals(jorb).Centre(1);
+	           else
+	                   xjorb = orbitals(jorb).Pcentre(1);
+	           end
+		   orb_xcoords(iorb,jorb) = xiorb - xjorb;
+	   end
+   end 
+
    if(bse_serial)
       [D1,BSE_eig,omega,Resigma,Acvk,osc_strength,ind1,ind2,ind3] =  BSE(vn,cn,Cv,Cc,Ev,Ec,knum_tot,all_kpts,...
-                     bondlength(1)*sqrt(3),gradH_x,outfname,mcell,c_index,...
+                     bondlength(1)*sqrt(3),Hmat,gradH_x,orb_xcoords,outfname,mcell,c_index,...
                      tot_natoms,structure,elho_int,dL);
    else
       [BSE_eig,omega,Resigma,Acvk,osc_strength,ind1,ind2,ind3] =  BSE_parallel(vn,cn,Cv,Cc,Ev,Ec,knum_tot,all_kpts,...
-                     bondlength(1)*sqrt(3),gradH_x,outfname,mcell,c_index,...
+                     bondlength(1)*sqrt(3),Hmat,gradH_x,orb_xcoords,outfname,mcell,c_index,...
                      tot_natoms,structure,elho_int,dL);
    end
+   clear Hmat orb_xcoords orbitals 
+
    fprintf('--> Plotting excitonic wavefunction, for exciton %i ...\n', bse_eig_plot)
    [BSE_eig, ind_eig] = sort(BSE_eig);
    Acvk = Acvk(:,ind_eig);
    format long
    BSE_eig(1:20)
-   [supercell, psi_M1, psi_M2, psi_kM1, psi_kM2] = plot_exciton_wfc2(c_index_up,c_index_down,r_h, orb_h_up, orb_h_down, Acvk(:,bse_eig_plot:bse_eig_plot+1), Cv, Cc, mcell, ...
+   [supercell, psi_X, psi_kM1, psi_kM2] = plot_exciton_wfc(c_index_up,c_index_down,r_h, orb_h_up, orb_h_down, Acvk(:,bse_eig_plot:bse_eig_plot+2*nspin-1), Cv, Cc, mcell, ...
                         structure.x, structure.y, structure.z, all_kpts, knum_tot, tot_natoms, ...
                         ind1, ind2, ind3, size(ind1,1),BSE_eig(bse_eig_plot),join(['exciton_wfc_eig',num2str(bse_eig_plot)]), twisted);
    fprintf('done.\n')
@@ -739,11 +816,11 @@ if(task==5)
       fprintf('--> Saving BSE eigenvalues and oscillator strength in %s ... ',BSE_outfname)
       save(fullfile(dirname,BSE_outfname),'BSE_eig','Resigma','omega','osc_strength', ...
       'Acvk', 'ind1', 'ind2', 'ind3', 'c_index_up', 'c_index_down', 'Cv', 'Cc', ... 
-      'psi_M1', 'supercell','psi_kM1','psi_kM2');
+      'psi_X', 'supercell','psi_kM1','psi_kM2');
       fprintf('done\n\n')
    end
    clear Acvk BSE_eig Resigma omega osc_strength ind1 ind2 ind3 c_index_up c_index_down Cv Cc ...
-         psi_M1 psi_kM1 psi_kM2
+         psi_X psi_kM1 psi_kM2
    delete(gcp('nocreate'))
 end
 
@@ -766,7 +843,28 @@ if(task==6)
 end
 
 if(task==7 && write_ham)
-   write_ham_hdf5
+   write_hdf5_new
+end
+
+if(task == 8 && lwannier90)
+        % List of orbital centres
+        coords = zeros(tot_norbs,3);
+        for iorb = 1 : tot_norbs
+              if(orbitals(iorb).l==1)
+                 x = orbitals(iorb).Pcentre;
+              elseif(orbitals(iorb).l==2)
+                 x = orbitals(iorb).Centre;
+              end
+              coords(iorb,:) = x;
+        end
+
+	% Compute Mmn and Amn matrices
+	mmn_fname = join([w90_rootname,'.mmn']);
+	compute_mmn;
+	amn_fname = join([w90_rootname,'.amn']);
+	compute_amn;
+	eig_fname = join([w90_rootname,'.eig']);
+	compute_eig;
 end
 
 %close all;

@@ -5,9 +5,8 @@
 % etc.                                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [orbitals] = initialise_orbitals2(orbitals,structure,rel_pos,...
-     rel_pos_ws,pris_pos_ws,ind_ws,...
-     mcell,tot_natoms,natoms,multilayer,nlayer,nspin)
+function [orbitals,motif,orb_pattern] = initialise_orbitals2(orbitals,structure,...
+     mcell,tot_natoms,natoms,multilayer,nlayer,nspin,def_pot)
 jorb = 0;
 layer1 = 1;
 if (multilayer)
@@ -55,6 +54,9 @@ end
 
 isfree(1:tot_natoms) = true;
 finish = 0;
+motif = zeros(tot_natoms,2);
+orb_pattern = zeros(tot_natoms,1);
+inat2 = 0;
 % Loop over atoms
 for layer = layer1 : layer2
     start = finish + 1;
@@ -62,17 +64,15 @@ for layer = layer1 : layer2
     for spin = -nspin+1 : 2 : nspin - 1
         isfree(start:finish) = true;
         for inat = start : finish
+		dr = 0.0;
             % Find a free metal atom
             if ((structure.name(inat) == "Mo" || structure.name(inat) == "W") && structure.layer(inat) == layer && isfree(inat))
                 isfree(inat) = false;
-                x1 = rel_pos(inat,:);
-                x1_ws = rel_pos_ws(ind_ws == inat,:);
-                x1_pris_ws = pris_pos_ws(ind_ws == inat,:);
-		if(norm(x1_ws -x1_pris_ws) > 1E-10 && norm(x1_ws(1:2)) > 1E-4 && norm(x1_pris_ws(1:2)) > 1E-4)
-                   loc_theta = acos(dot(x1_ws(1:2),x1_pris_ws(1:2))/norm(x1_ws(1:2))/norm(x1_pris_ws(1:2)));
-	        else
-	           loc_theta = 0.0;
-	        end
+                x1 = [structure.x(inat) structure.y(inat) structure.z(inat)];
+                dr = def_pot(inat);
+                inat2 = inat2 + 1;
+                motif(inat2,:) = x1(1:2);
+                orb_pattern(inat2) = 10;
                 for iorb = 1:11
                     if (iorb == 1 || iorb == 2 || iorb == 6 || iorb == 7 || iorb == 8)
                         jorb = jorb + 1;
@@ -82,7 +82,8 @@ for layer = layer1 : layer2
                         % Associate a Metal atom to this orbital
                         orbitals(jorb).Found_centre = true;
                         orbitals(jorb).Centre = x1;
-		        orbitals(jorb).loc_theta = loc_theta;
+		        %orbitals(jorb).loc_theta = loc_theta;
+		        orbitals(jorb).dr = dr;
                         orbitals(jorb).Layer = structure.layer(inat);
                         orbitals(jorb).Spin = spin;
                         %orbitals(jorb).N = metal_pqm(layer);
@@ -97,18 +98,17 @@ for layer = layer1 : layer2
             foundX = false;
             if ((structure.name(inat) == "S" || structure.name(inat) == "Se") && structure.layer(inat) == layer && isfree(inat))
                 incell = 0;
-                x1 = rel_pos(inat,:);
-                %x1_pris = pris_pos(inat,:);
-                x1_ws = rel_pos_ws(ind_ws == inat,:);
-                x1_pris_ws = pris_pos_ws(ind_ws == inat,:);
+                x1 = [structure.x(inat) structure.y(inat) structure.z(inat)];
+                inat2 = inat2 + 1;
+                motif(inat2,:) = x1(1:2);
+                orb_pattern(inat2) = 6;
                 isfree(inat) = false;
+		dr1 = def_pot(inat);
                 % find its companion
                 for jnat = start : finish
                     if((structure.name(jnat) == "S" || structure.name(jnat) == "Se") && structure.layer(jnat) == layer && isfree(jnat) )
                         
-                        x2 = rel_pos(jnat,:);
-                        x2_ws = rel_pos_ws(ind_ws == jnat,:);
-                        x2_pris_ws = pris_pos_ws(ind_ws == jnat,:);
+                        x2 = [structure.x(jnat) structure.y(jnat) structure.z(jnat)];
                         for in = -1 : 1
                             for im = -1 : 1
                                 shift = x2 + in*mcell(1,:) + im*mcell(2,:);
@@ -127,6 +127,10 @@ for layer = layer1 : layer2
                             end
                         end
                         if(foundX)
+                            inat2 = inat2 + 1;
+                            motif(inat2,:) = x1(1:2);
+                            orb_pattern(inat2) = 6;
+		            dr2 = def_pot(inat2);
                             break;
                         end
                     end
@@ -139,13 +143,16 @@ for layer = layer1 : layer2
                             orbitals(jorb).Ham_index = jorb;
                             orbitals(jorb).Rel_index = iorb;
                             orbitals(jorb).Found_centre = true;
-		            orbitals(jorb).loc_theta = 0.0;
                             if(x1(3)<x2(3))
                                 orbitals(jorb).Centre = [x1(1),x1(2),(x1(3)+x2(3))/2];
                                 orbitals(jorb).Pcentre = x1;
+		                %orbitals(jorb).loc_theta = loc_theta1;
+		                orbitals(jorb).dr = dr1;
                             else
                                 orbitals(jorb).Centre = [x2(1),x2(2),(x1(3)+x2(3))/2];
                                 orbitals(jorb).Pcentre = x2;
+		                %orbitals(jorb).loc_theta = loc_theta2;
+		                orbitals(jorb).dr = dr2;
                             end
                             orbitals(jorb).Layer = structure.layer(inat);
                             orbitals(jorb).Spin = spin;
@@ -157,13 +164,16 @@ for layer = layer1 : layer2
                             orbitals(jorb).Ham_index = jorb;
                             orbitals(jorb).Rel_index = iorb;
                             orbitals(jorb).Found_centre = true;
-		            orbitals(jorb).loc_theta = 0.0;
                             if(x1(3)>x2(3))
                                 orbitals(jorb).Centre = [x1(1),x1(2),(x1(3)+x2(3))/2];
                                 orbitals(jorb).Pcentre = x1;
+		                %orbitals(jorb).loc_theta = loc_theta1;
+		                orbitals(jorb).dr = dr1;
                             else
                                 orbitals(jorb).Centre = [x2(1),x2(2),(x1(3)+x2(3))/2];
                                 orbitals(jorb).Pcentre = x2;
+		                %orbitals(jorb).loc_theta = loc_theta2;
+		                orbitals(jorb).dr = dr2;
                             end
                             orbitals(jorb).Layer = structure.layer(inat);
                             orbitals(jorb).Spin = spin;
